@@ -11,12 +11,13 @@ Aura 是一款為人類工程師設計的「全方位 AI 協同框架」。它�
 模型不可知 (Model Agnostic)：像更換數據庫一樣輕鬆切換 OpenAI, Anthropic 或 Llama 模型。
 
 ## 🛠 Aura 生態系統
+
 | 模組 | Laravel 對應 | 功能描述 |
 |---|--------|----------|----------|
 | Aura Core | Routing / Controllers | 統一調度中心，管理應用的生命週期。 |
 | Aura Pulse | Eloquent ORM | AI 的數據管理層，將 RAG 與向量庫抽象化。 |
 | Aura Vision | Middleware | 圖像識別與影像串流處理插件。 |
-| Aura CLI | Artisan | 基於 uvx 的強大工具：aura make:soul
+| Aura CLI | Artisan | 基於 uvx 的強大工具：`aura make:soul` |
 
 ## 🚀 快速啟動 (Powered by [uv](https://docs.astral.sh/uv/))
 1. 建立專案
