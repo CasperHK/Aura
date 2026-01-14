@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aura-config
+  namespace: aura
+data:
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  LOG_LEVEL: "INFO"
+  # AI Model Configuration
+  MODEL_PROVIDER: "openai"
+  # Memory/Vector Database
+  VECTOR_DB_TYPE: "qdrant"
+  VECTOR_DB_HOST: "qdrant"
+  VECTOR_DB_PORT: "6333"
+  # Application Settings
+  APP_ENV: "production"
+  APP_DEBUG: "false"

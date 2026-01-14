@@ -1,0 +1,121 @@
+# Default values for aura.
+# This is a YAML-formatted file.
+
+replicaCount: 3
+
+image:
+  repository: aura
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+    - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: aura.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: aura-tls
+      hosts:
+        - aura.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+persistence:
+  enabled: true
+  cache:
+    storageClassName: standard
+    size: 10Gi
+  memory:
+    storageClassName: standard
+    size: 20Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - aura
+        topologyKey: kubernetes.io/hostname
+
+config:
+  LOG_LEVEL: INFO
+  MODEL_PROVIDER: openai
+  VECTOR_DB_TYPE: qdrant
+  VECTOR_DB_HOST: qdrant
+  VECTOR_DB_PORT: 6333
+  APP_ENV: production
+  APP_DEBUG: "false"
+
+secrets:
+  # API Keys - set via --set or values override
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  VECTOR_DB_PASSWORD: ""
+
+# OpenShift specific settings
+openshift:
+  enabled: false
+  route:
+    enabled: true
+    host: ""
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect

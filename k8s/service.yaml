@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aura-core
+  namespace: aura
+  labels:
+    app: aura
+    component: core
+spec:
+  type: ClusterIP
+  selector:
+    app: aura
+    component: core
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aura-core-headless
+  namespace: aura
+  labels:
+    app: aura
+    component: core
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: aura
+    component: core
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP

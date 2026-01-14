@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: aura-template
+  annotations:
+    description: "Aura AI Framework - OpenShift Template"
+    iconClass: "icon-python"
+parameters:
+- name: PROJECT_NAME
+  displayName: Project Name
+  description: The name of the OpenShift project
+  value: aura
+  required: true
+- name: IMAGE_REGISTRY
+  displayName: Image Registry
+  description: Container image registry
+  value: docker.io
+  required: true
+- name: IMAGE_NAMESPACE
+  displayName: Image Namespace
+  description: Container image namespace/repository
+  value: library
+  required: true
+- name: IMAGE_TAG
+  displayName: Image Tag
+  description: Container image tag
+  value: latest
+  required: true
+- name: REPLICAS
+  displayName: Replicas
+  description: Number of pod replicas
+  value: "3"
+  required: true
+- name: MEMORY_REQUEST
+  displayName: Memory Request
+  description: Memory request per pod
+  value: 256Mi
+  required: true
+- name: MEMORY_LIMIT
+  displayName: Memory Limit
+  description: Memory limit per pod
+  value: 1Gi
+  required: true
+- name: CPU_REQUEST
+  displayName: CPU Request
+  description: CPU request per pod
+  value: 250m
+  required: true
+- name: CPU_LIMIT
+  displayName: CPU Limit
+  description: CPU limit per pod
+  value: 1000m
+  required: true
+
+objects:
+- apiVersion: project.openshift.io/v1
+  kind: Project
+  metadata:
+    name: ${PROJECT_NAME}
+  spec:
+    finalizers:
+    - kubernetes
+
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ${PROJECT_NAME}
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: aura
+    namespace: ${PROJECT_NAME}
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: aura-core
+    namespace: ${PROJECT_NAME}
+  spec:
+    replicas: ${{REPLICAS}}
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    selector:
+      matchLabels:
+        app: aura
+    template:
+      metadata:
+        labels:
+          app: aura
+      spec:
+        serviceAccountName: aura
+        securityContext:
+          runAsNonRoot: true
+          fsGroup: 1000
+        containers:
+        - name: aura
+          image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/aura:${IMAGE_TAG}
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 8000
+            name: http
+          resources:
+            requests:
+              memory: ${MEMORY_REQUEST}
+              cpu: ${CPU_REQUEST}
+            limits:
+              memory: ${MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: aura-core
+    namespace: ${PROJECT_NAME}
+  spec:
+    type: ClusterIP
+    selector:
+      app: aura
+    ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: aura-route
+    namespace: ${PROJECT_NAME}
+  spec:
+    to:
+      kind: Service
+      name: aura-core
+      weight: 100
+    port:
+      targetPort: http
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
